@@ -62,6 +62,10 @@
   .rh-sharebtn:hover{background:rgba(0,113,227,0.16);}
   .rh-suggest{transition:background .15s ease,transform .15s ease;}
   .rh-suggest:hover{background:var(--hbg) !important;transform:translateX(2px);}
+  .rh-move{display:flex;align-items:center;justify-content:center;width:17px;height:18px;border:none;background:none;cursor:pointer;color:var(--icon-faint);border-radius:5px;padding:0;transition:color .15s ease,background .15s ease;}
+  .rh-move:hover{color:#0071e3;background:rgba(0,113,227,0.12);}
+  .rh-move[disabled]{opacity:0.25;cursor:default;}
+  .rh-move[disabled]:hover{color:var(--icon-faint);background:none;}
   @keyframes rhStar{0%{transform:scale(.5);}60%{transform:scale(1.25);}100%{transform:scale(1);}}
   :focus-visible{outline:2px solid #0071e3;outline-offset:2px;border-radius:7px;}
   .rh-topic{transition:background .15s ease,color .15s ease,box-shadow .15s ease,transform .15s ease;}
@@ -364,6 +368,13 @@ function renameSub(){
   var nd={}; Object.keys(d).forEach(function(k){ nd[k===oldN?newN:k]=d[k]; });
   commit(nd, {adminTopic:newN}); flash('Renamed to '+newN);
 }
+function moveSub(name, dir){
+  var d=getData(), keys=Object.keys(d), i=keys.indexOf(name);
+  if(i<0) return; var j=i+dir; if(j<0||j>=keys.length) return;
+  keys.splice(i,1); keys.splice(j,0,name);
+  var nd={}; keys.forEach(function(k){ nd[k]=d[k]; });
+  commit(nd, {}); flash(dir<0?'Moved up':'Moved down');
+}
 function saveArticle(){
   var afType=state.afType, editing=state.editing, adminTopic=state.adminTopic;
   if(!adminTopic) return;
@@ -603,7 +614,7 @@ function render(){
       var hbg=active?rgba(color,0.1):'var(--hover-soft)';
       var fg=active?'var(--text)':'var(--text-3)';
       var count=t.rct.length+t.review.length+t.guideline.length;
-      html+='<div class="rh-arow" style="--hbg:'+hbg+';display:flex;align-items:center;gap:8px;border-radius:9px;padding:7px 8px 7px 11px;background:'+bg+';"><span style="width:8px;height:8px;border-radius:50%;flex:none;background:'+color+';"></span><button data-act="selectAdminTopic" data-name="'+esc(name)+'" style="flex:1 1 auto;min-width:0;text-align:left;font-family:inherit;font-size:13px;font-weight:500;border:none;background:none;cursor:pointer;padding:0;color:'+fg+';overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(name)+'</button><span style="font-size:11px;font-weight:600;color:var(--muted);flex:none;">'+count+'</span><button class="rh-xbtn" data-act="askDeleteSub" data-name="'+esc(name)+'" title="Delete subspecialty" style="flex:none;width:20px;height:20px;display:flex;align-items:center;justify-content:center;border:none;background:none;cursor:pointer;color:var(--icon-faint);border-radius:6px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></div>';
+      html+='<div class="rh-arow" style="--hbg:'+hbg+';display:flex;align-items:center;gap:8px;border-radius:9px;padding:7px 8px 7px 11px;background:'+bg+';"><span style="width:8px;height:8px;border-radius:50%;flex:none;background:'+color+';"></span><button data-act="selectAdminTopic" data-name="'+esc(name)+'" style="flex:1 1 auto;min-width:0;text-align:left;font-family:inherit;font-size:13px;font-weight:500;border:none;background:none;cursor:pointer;padding:0;color:'+fg+';overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(name)+'</button><span style="font-size:11px;font-weight:600;color:var(--muted);flex:none;">'+count+'</span><span style="display:flex;align-items:center;gap:1px;flex:none;"><button class="rh-move"'+(idx===0?' disabled':' data-act="moveSub" data-name="'+esc(name)+'" data-dir="-1"')+' title="Move up" aria-label="Move '+esc(name)+' up"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"></path></svg></button><button class="rh-move"'+(idx===names.length-1?' disabled':' data-act="moveSub" data-name="'+esc(name)+'" data-dir="1"')+' title="Move down" aria-label="Move '+esc(name)+' down"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg></button></span><button class="rh-xbtn" data-act="askDeleteSub" data-name="'+esc(name)+'" title="Delete subspecialty" style="flex:none;width:20px;height:20px;display:flex;align-items:center;justify-content:center;border:none;background:none;cursor:pointer;color:var(--icon-faint);border-radius:6px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></div>';
     });
     html+='</div><div style="display:flex;gap:8px;padding-top:14px;border-top:1px solid var(--grey-btn);"><input id="newSubName" data-model="newSubName" data-enter="addSub" type="text" placeholder="New subspecialty" value="'+esc(state.newSubName)+'" class="rh-input" style="flex:1 1 auto;min-width:0;height:36px;padding:0 12px;font-family:inherit;font-size:13px;color:var(--text);background:var(--fill);border:1px solid var(--border-3);border-radius:9px;outline:none;"><button class="rh-lift" data-act="addSub" title="Add subspecialty" style="flex:none;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;border-radius:9px;background:#0071e3;color:#fff;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></button></div></aside>';
 
@@ -726,6 +737,7 @@ var actions={
   clearSearch:function(){ setState({query:'', libMode:'browse'}); },
   selectAdminTopic:function(el){ selectAdminTopic(el.getAttribute('data-name')); },
   askDeleteSub:function(el){ setState({deleteSubTarget:el.getAttribute('data-name'), deleteSubInput:''}); },
+  moveSub:function(el){ moveSub(el.getAttribute('data-name'), +el.getAttribute('data-dir')); render(); },
   addSub:function(){ addSub(); render(); },
   rename:function(){ renameSub(); render(); },
   typeOpt:function(el){ setState({afType:el.getAttribute('data-type')}); },
