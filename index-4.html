@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Respirology Hub — Landmark Evidence Repository</title>
+<meta name="description" content="A curated, searchable index of landmark trials, reviews, and guidelines in respiratory medicine.">
+<!-- Inline SVG favicon: the activity/pulse mark on a blue square -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%230071e3'/%3E%3Cpath d='M22 12h-4l-3 9L9 3l-3 9H2' fill='none' stroke='%23fff' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' transform='translate(0 0) scale(0.78) translate(3.2 3.2)'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<!-- Set theme before paint to avoid a flash of the wrong theme -->
+<script>try{var _t=localStorage.getItem('respHubTheme')||((window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches)?'dark':'light');document.documentElement.setAttribute('data-theme',_t);}catch(e){}</script>
+<style>
+  :root{
+    color-scheme:light;
+    --bg:#f5f5f7; --surface:#ffffff; --fill:#f5f5f7;
+    --text:#1d1d1f; --text-2:#6e6e73; --text-3:#3a3a3c; --muted:#86868b; --faint:#a0a0a8; --faint-2:#b0b0b8;
+    --border:#e8e8ed; --border-2:#d2d2d7; --border-3:#e0e0e5;
+    --nav-bg:rgba(245,245,247,0.82); --seg-active:#ffffff;
+    --grey-btn:#f0f0f2; --grey-btn-hover:#e5e5ea; --icon-faint:#c7c7cc;
+    --toast-bg:#1d1d1f; --toast-fg:#ffffff;
+    --scrim:rgba(0,0,23,0.45); --hover-soft:rgba(0,0,0,0.04);
+    --sel-bg:#cce4ff; --sel-fg:#0a3d7a;
+  }
+  [data-theme="dark"]{
+    color-scheme:dark;
+    --bg:#161618; --surface:#1f1f22; --fill:#2a2a2e;
+    --text:#f5f5f7; --text-2:#a8a8ae; --text-3:#cfcfd4; --muted:#8a8a90; --faint:#7e7e85; --faint-2:#6e6e75;
+    --border:#2e2e32; --border-2:#3c3c42; --border-3:#3c3c42;
+    --nav-bg:rgba(22,22,24,0.82); --seg-active:#48484e;
+    --grey-btn:#2a2a2e; --grey-btn-hover:#3a3a40; --icon-faint:#5a5a60;
+    --toast-bg:#f5f5f7; --toast-fg:#1d1d1f;
+    --scrim:rgba(0,0,0,0.6); --hover-soft:rgba(255,255,255,0.06);
+    --sel-bg:#0a3d7a; --sel-fg:#cce4ff;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  html{background:var(--bg);}
+  body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;transition:background-color .25s ease,color .25s ease;}
+  ::placeholder{color:var(--muted);opacity:1;}
+  ::selection{background:var(--sel-bg);color:var(--sel-fg);}
+  @keyframes rhRise{from{transform:translateY(10px);}to{transform:none;}}
+  @keyframes rhSlideT{from{transform:translateY(-8px);}to{transform:none;}}
+  @keyframes rhToast{from{opacity:0;transform:translate(-50%,16px);}to{opacity:1;transform:translate(-50%,0);}}
+  @keyframes rhPop{from{opacity:0;transform:translateY(10px) scale(0.97);}to{opacity:1;transform:none;}}
+  @keyframes rhGlow{0%,100%{box-shadow:0 0 3px 0 var(--dot);}50%{box-shadow:0 0 11px 3px var(--dot);}}
+
+  /* Dynamic-color hovers via CSS custom props (replaces the prototype's style-hover) */
+  .rh-cardwrap{position:relative;transition:transform .18s ease;}
+  .rh-cardwrap:hover{transform:translateY(-3px);}
+  .rh-cardwrap:hover .rh-card{box-shadow:0 10px 26px var(--glow);border-color:var(--bc);}
+  .rh-card{transition:box-shadow .18s ease,border-color .18s ease;}
+  .rh-actions{position:absolute;display:flex;align-items:center;gap:2px;}
+  .rh-year{font-size:10px;font-weight:600;color:var(--faint);background:var(--fill);border-radius:5px;padding:2px 6px;margin-right:2px;}
+  .rh-iconbtn{display:flex;align-items:center;justify-content:center;width:26px;height:26px;border:none;background:transparent;cursor:pointer;border-radius:7px;padding:0;color:var(--icon-faint);transition:color .15s ease,background .15s ease;}
+  .rh-copy:hover{color:#0071e3;background:rgba(0,113,227,0.1);}
+  .rh-star:hover{color:#f5a623;background:rgba(245,166,35,0.14);}
+  .rh-star.on{color:#f5a623;}
+  .rh-sharebtn{transition:background .15s ease;}
+  .rh-sharebtn:hover{background:rgba(0,113,227,0.16);}
+  .rh-suggest{transition:background .15s ease,transform .15s ease;}
+  .rh-suggest:hover{background:var(--hbg) !important;transform:translateX(2px);}
+  @keyframes rhStar{0%{transform:scale(.5);}60%{transform:scale(1.25);}100%{transform:scale(1);}}
+  :focus-visible{outline:2px solid #0071e3;outline-offset:2px;border-radius:7px;}
+  .rh-topic{transition:background .15s ease,color .15s ease,box-shadow .15s ease,transform .15s ease;}
+  .rh-topic:hover{background:var(--hbg);transform:translateX(2px);}
+  .rh-arow{transition:background .15s ease;}
+  .rh-arow:hover{background:var(--hbg);}
+  .rh-help{transition:color .15s ease,border-color .15s ease;}
+  .rh-help:hover{color:#0071e3;border-color:#0071e3;}
+  .rh-blue{transition:background .15s ease;}
+  .rh-blue:hover{background:#0061c3;}
+  .rh-lift{transition:transform .12s ease,box-shadow .15s ease;}
+  .rh-lift:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(0,113,227,0.3);}
+  .rh-grey{transition:background .15s ease;}
+  .rh-grey:hover{background:var(--grey-btn-hover);}
+  .rh-xbtn{transition:color .15s ease,background .15s ease;}
+  .rh-xbtn:hover{color:#ff3b30;background:rgba(255,59,48,0.1);}
+  .rh-iconedit{transition:background .15s ease,color .15s ease;}
+  .rh-iconedit:hover{background:rgba(0,113,227,0.1);color:#0071e3;}
+  .rh-icondel{transition:background .15s ease,color .15s ease;}
+  .rh-icondel:hover{background:rgba(255,59,48,0.1);color:#ff3b30;}
+  .rh-renamebtn{transition:background .15s ease;}
+  .rh-renamebtn:hover{background:rgba(0,113,227,0.16);}
+
+  .rh-input{transition:border-color .15s ease;}
+  .rh-input:focus{border-color:#0071e3;}
+  .rh-search{transition:border-color .15s ease,box-shadow .15s ease;}
+  .rh-search:focus{border-color:#0071e3;box-shadow:0 0 0 3px rgba(0,113,227,0.15);}
+  .rh-input-red:focus{border-color:#ff3b30;}
+  .rh-rename{transition:border-color .15s ease;}
+  .rh-rename:focus{border-bottom-color:var(--fc);}
+
+  /* Responsive: stack the two-column layouts and tighten spacing on phones */
+  @media (max-width:760px){
+    .rh-main{padding:30px 16px 64px !important;}
+    .rh-nav{padding:0 16px !important;}
+    .rh-cols{flex-direction:column !important;gap:24px !important;}
+    .rh-side{position:static !important;flex:0 0 auto !important;width:100% !important;top:auto !important;}
+    .rh-hero h1{font-size:30px !important;}
+  }
+  @media (max-width:430px){
+    .rh-word{display:none !important;}
+  }
+  @media print{
+    [data-print-hide]{display:none !important;}
+    body{background:#fff;}
+    .rh-anim,[data-reveal]{opacity:1 !important;animation:none !important;transform:none !important;}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .rh-anim,[data-reveal]{opacity:1 !important;animation:none !important;transform:none !important;}
+    [data-glow]{animation:none !important;}
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+(function(){
+"use strict";
+
+/* ---------- seed data (from the design prototype; verify links before clinical use) ---------- */
+function seedData(){
+  return {
+    "Asthma": {
+      rct: [
+        { title: "MENSA (Mepolizumab) NEJM 2014", url: "https://www.nejm.org/doi/full/10.1056/NEJMoa1403290" },
+        { title: "Reslizumab for Asthma Lancet 2015", url: "https://www.thelancet.com/journals/lanres/article/PIIS2213-2600(15)00042-9/fulltext" },
+        { title: "CALIMA (Benralizumab) Lancet 2016", url: "https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(16)31322-8/fulltext" },
+        { title: "QUEST (Dupilumab) NEJM 2018", url: "https://www.nejm.org/doi/full/10.1056/NEJMoa1804092" },
+        { title: "NOVEL START NEJM 2019", url: "https://www.nejm.org/doi/full/10.1056/NEJMoa1901963" },
+        { title: "NAVIGATOR (Tezepelumab) NEJM 2021", url: "https://www.nejm.org/doi/full/10.1056/NEJMoa2034975" },
+        { title: "SWIFT1/2 (Depemokimab) NEJM 2024", url: "https://www.nejm.org/doi/abs/10.1056/NEJMoa2406673" }
+      ],
+      review: [
+        { title: "Asthma in Adults NEJM 2023", url: "https://www.nejm.org/doi/pdf/10.1056/nejmcp2304871" },
+        { title: "LAMA added to LABA/ICS for Asthma COCHRANE 2016", url: "https://www.cochranelibrary.com/cdsr/doi/10.1002/14651858.CD011721.pub2/full" },
+        { title: "Anti-cytokine biologics for asthma in adults LANCET 2025", url: "https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(25)01625-3/abstract" },
+        { title: "Biologic Therapies for Severe Asthma NEJM 2022", url: "https://www.nejm.org/doi/full/10.1056/NEJMra2034485" }
+      ],
+      guideline: [
+        { title: "GINA 2025", url: "https://ginasthma.org/reports/" },
+        { title: "Diagnosis and Management of Asthma: CTS 2021", url: "https://cts-sct.ca/guidelines/asthma/" },
+        { title: "ABPA Diagnostic Criteria ERS 2024", url: "https://erj.ersjournals.com/content/63/2/2301581" },
+        { title: "Biologic Management in Severe Asthma for Adults: CHEST 2026", url: "https://journal.chestnet.org/article/S0012-3692(25)00412-2/fulltext" }
+      ]
+    },
+    "COPD": {
+      rct: [
+        { title: "Azithromycin for prevention of COPD NEJM 2011", url: "https://www.nejm.org/doi/full/10.1056/NEJMoa1104623" },
+        { title: "POET-COPD NEJM 2011", url: "https://www.nejm.org/doi/10.1056/NEJMoa1008378" },
+        { title: "PANTHEON (NAC) LANCET 2015", url: "https://www.thelancet.com/journals/lanres/article/PIIS2213-2600(13)70286-8/fulltext" },
+        { title: "WISDOM NEJM 2014", url: "https://www.nejm.org/doi/full/10.1056/NEJMoa1401536" },
+        { title: "IMPACT (Trelegy) NEJM 2018", url: "https://www.nejm.org/doi/full/10.1056/NEJMoa1713901" },
+        { title: "ETHOS (Breztri) NEJM 2020", url: "https://www.nejm.org/doi/full/10.1056/NEJMoa2008548" },
+        { title: "ENHANCE-1/2 (Ensifentrine) AJRCCM 2023", url: "https://www.atsjournals.org/doi/full/10.1164/rccm.202306-1061OC" },
+        { title: "BOREAS (Dupilumab COPD) NEJM 2023", url: "https://www.nejm.org/doi/full/10.1056/NEJMoa2303951" },
+        { title: "NOTUS (Dupilumab COPD) NEJM 2024", url: "https://www.nejm.org/doi/full/10.1056/NEJMoa2401304" }
+      ],
+      review: [
+        { title: "NIV for COPDe Cochrane 2004", url: "https://www.cochranelibrary.com/cdsr/doi/10.1002/14651858.CD004104.pub2/full" },
+        { title: "Mucolytic agents vs placebo for chronic bronchitis or COPD Cochrane 2019", url: "https://www.cochranelibrary.com/cdsr/doi/10.1002/14651858.CD001287.pub6/full" },
+        { title: "LAMA/LABA vs LAMA or LABA for COPD SRMA ATS 2020", url: "https://www.atsjournals.org/doi/full/10.1164/rccm.202002-0310ST" },
+        { title: "Prophylactic antibiotics for COPD Cochrane 2021", url: "https://www.cochranelibrary.com/cdsr/doi/10.1002/14651858.CD009764.pub3/full" }
+      ],
+      guideline: [
+        { title: "CTS Pharmacotherapy for COPD 2023", url: "https://cts-sct.ca/guidelines/copd/" },
+        { title: "GOLD 2023", url: "https://goldcopd.org/2023-gold-report-2/" },
+        { title: "Management of COPDe: ERS/ATS Guideline", url: "https://erj.ersjournals.com/content/49/3/1600791" }
+      ]
+    },
+    "ILD": {
+      rct: [
+        { title: "ASCEND (Pirfenidone for IPF) NEJM 2014", url: "https://www.nejm.org/doi/full/10.1056/NEJMoa1402582" },
+        { title: "INPULSIS-1/2 (Nintedanib) for IPF NEJM 2014", url: "https://www.nejm.org/doi/full/10.1056/NEJMoa1402584" },
+        { title: "INBUILD (Nintedanib for PPF) Trial NEJM 2019", url: "https://www.nejm.org/doi/full/10.1056/NEJMoa1908681" },
+        { title: "SENSCIS (Nintedanib for SSc-ILD) NEJM 2019", url: "https://www.nejm.org/doi/full/10.1056/NEJMoa1903076" },
+        { title: "FIBRONEER (Nerandomilast) NEJM 2025", url: "https://www.nejm.org/doi/full/10.1056/NEJMoa2411002" }
+      ],
+      review: [
+        { title: "ILD Review JAMA", url: "https://jamanetwork.com/journals/jama/article-abstract/2795412" },
+        { title: "Treatment of Pulmonary Disease in Sjogren's Chest 2021", url: "https://journal.chestnet.org/article/S0012-3692(20)34932-6/fulltext" },
+        { title: "Diagnostic Patterns of ILD Pictorial Review", url: "https://pubs.rsna.org/doi/full/10.1148/rg.2021200167" }
+      ],
+      guideline: [
+        { title: "CTS Fibrotic Lung Disease 2023", url: "https://cts-sct.ca/guidelines/interstitial-lung-disease/" },
+        { title: "Classification of Interstitial Pneumonias ERS/ATS 2025", url: "https://erj.ersjournals.com/content/early/2025/01/15/13993003.02104-2024" }
+      ]
+    },
+    "Bronchiectasis": {
+      rct: [
+        { title: "EMBRACE (Azithromycin) LANCET 2011", url: "https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(12)61247-9/fulltext" },
+        { title: "CLEAR (Hypertonic vs. Carbocisteine) NEJM 2025", url: "https://www.nejm.org/doi/full/10.1056/NEJMoa2408990" },
+        { title: "ASPEN (DPP4i) in Bronchiectasis NEJM 2025", url: "https://www.nejm.org/doi/full/10.1056/NEJMoa2410405" }
+      ],
+      review: [
+        { title: "Bronchiectasis: A Clinical Review 2022", url: "https://www.nejm.org/doi/full/10.1056/NEJMra2202860" },
+        { title: "Non-CF Bronchiectasis in Adults: JAMA 2025", url: "https://jamanetwork.com/journals/jama/article-abstract/2829910" }
+      ],
+      guideline: [
+        { title: "ERS 2025 Bronchiectasis Guidelines", url: "https://erj.ersjournals.com/content/early/2025/02/10/13993003.01844-2024" }
+      ]
+    },
+    "Pulmonary Hypertension": {
+      rct: [
+        { title: "STELLAR (Sotatercept for PH) NEJM 2023", url: "https://www.nejm.org/doi/full/10.1056/NEJMoa2213558" },
+        { title: "HYPERION (Sotatercept) NEJM 2025", url: "https://www.nejm.org/doi/full/10.1056/NEJMoa2412801" },
+        { title: "TACTIC Lancet 2026", url: "https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(26)00104-1/fulltext" }
+      ],
+      review: [
+        { title: "Pulmonary Arterial Hypertension NEJM 2021", url: "https://www.nejm.org/doi/full/10.1056/NEJMra2003148" },
+        { title: "Pathophysiology of PH Physiology reviews 2023", url: "https://journals.physiology.org/doi/full/10.1152/physrev.00022.2022" },
+        { title: "Definition, classification of PH: ERS 2024", url: "https://erj.ersjournals.com/content/64/3/2400810" }
+      ],
+      guideline: [
+        { title: "CCS position statement PH 2020", url: "https://onlinecjc.ca/article/S0828-282X(20)30491-X/fulltext" },
+        { title: "ERS Guidelines for PH 2022", url: "https://erj.ersjournals.com/content/61/1/2200879" }
+      ]
+    },
+    "Pleural Disease": {
+      rct: [
+        { title: "MIST2 NEJM 2011", url: "https://www.nejm.org/doi/full/10.1056/NEJMoa1012706" },
+        { title: "AMPLE JAMA 2017", url: "https://jamanetwork.com/journals/jama/fullarticle/2666210" },
+        { title: "PSP NEJM 2020", url: "https://www.nejm.org/doi/full/10.1056/NEJMoa1910775" }
+      ],
+      review: [
+        { title: "Pleural Disease NEJM 2018", url: "https://www.nejm.org/doi/full/10.1056/NEJMra1403503" }
+      ],
+      guideline: [
+        { title: "AATS Consensus Guidelines Empyema 2017", url: "https://www.aats.org/resources/aats-consensus-guidelines-for-the-management-of-empyema" },
+        { title: "BTS Guideline Pleural disease 2023", url: "https://thorax.bmj.com/content/78/Suppl_3/s1" }
+      ]
+    },
+    "Oxygen Therapy/Respiratory Failure": {
+      rct: [
+        { title: "FLORALI NEJM 2015", url: "https://www.nejm.org/doi/full/10.1056/NEJMoa1503326" },
+        { title: "RENOVATE JAMA 2025", url: "https://jamanetwork.com/journals/jama/fullarticle/2831204" },
+        { title: "SOHO NEJM 2026", url: "https://www.nejm.org/doi/full/10.1056/NEJMoa2514321" }
+      ],
+      review: [
+        { title: "Respiratory Support for ARF NEJM 2022", url: "https://www.nejm.org/doi/full/10.1056/NEJMra2033710" },
+        { title: "NIV for COPDe Cochrane 2004", url: "https://www.cochranelibrary.com/cdsr/doi/10.1002/14651858.CD004104.pub2/full" }
+      ],
+      guideline: [
+        { title: "ERS clinical practice guidelines: HFNC in ARF", url: "https://erj.ersjournals.com/content/59/1/2101574" }
+      ]
+    },
+    "Pulmonary Infections": {
+      rct: [
+        { title: "Voriconazole vs. Amphotericin B for Aspergillosis NEJM 2002", url: "https://www.nejm.org/doi/full/10.1056/NEJMoa020354" },
+        { title: "CAPE COD NEJM 2023", url: "https://www.nejm.org/doi/full/10.1056/NEJMoa2215145" },
+        { title: "ACCESS 2024 LANCET Resp Med", url: "https://www.thelancet.com/journals/lanres/article/PIIS2213-2600(24)00112-X/fulltext" }
+      ],
+      review: [
+        { title: "Tuberculosis NEJM 2013", url: "https://www.nejm.org/doi/full/10.1056/NEJMra1214256" }
+      ],
+      guideline: [
+        { title: "Diagnosis and Management of CAP: ATS Guideline", url: "https://www.atsjournals.org/doi/full/10.1164/rccm.201908-1581ST" }
+      ]
+    },
+    "Sleep Medicine": {
+      rct: [
+        { title: "CPAP on HTN and CV events in OSA JAMA 2012", url: "https://jamanetwork.com/journals/jama/fullarticle/1167414" },
+        { title: "SAVE NEJM 2016", url: "https://www.nejm.org/doi/full/10.1056/NEJMoa1606599" }
+      ],
+      review: [],
+      guideline: []
+    },
+    "Cystic Fibrosis": {
+      rct: [
+        { title: "Trikafta for CF with F508del Allele NEJM 2019", url: "https://www.nejm.org/doi/full/10.1056/NEJMoa1908639" }
+      ],
+      review: [],
+      guideline: []
+    },
+    "Smoking Cessation": {
+      rct: [
+        { title: "EAGLES Trial Lancet 2016", url: "https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(16)30272-0/fulltext" },
+        { title: "Varenicline vs Placebo or Bupropion for Smoking Cessation", url: "https://jamanetwork.com/journals/jama/fullarticle/185014" }
+      ],
+      review: [
+        { title: "NRT vs Control for Smoking Cessation Cochrane 2018", url: "https://www.cochranelibrary.com/cdsr/doi/10.1002/14651858.CD000146.pub5/full" }
+      ],
+      guideline: []
+    },
+    "Radiology": {
+      rct: [],
+      review: [
+        { title: "The Radiology Assistant: HRCT Basic Interpretation", url: "https://radiologyassistant.nl/chest/hrct/hrct-basic-interpretation" },
+        { title: "The role of HRCT in the follow-up of diffuse lung disease ERS", url: "https://ersjournals.com/content/22/suppl_41/93s" }
+      ],
+      guideline: []
+    },
+    "PFT interpretation": {
+      rct: [],
+      review: [
+        { title: "ERS/ATS strategies for interpretation of Lung function 2022", url: "https://erj.ersjournals.com/content/60/1/2101499" }
+      ],
+      guideline: []
+    }
+  };
+}
+
+/* ---------- config ---------- */
+// ponytail: client-side gate only — cosmetic, NOT real security (see README "Productionizing").
+var ADMIN_PASSWORD = 'respadmin';
+var PALETTE = ['#0071e3','#5856d6','#7c3aed','#9333ea','#db2777','#e11d48','#ea580c','#d97706','#0891b2','#0284c7','#16a34a','#0d9488','#92710f'];
+var COLORMAP = {
+  'Asthma':'#0071e3','COPD':'#5856d6','ILD':'#7c3aed','Bronchiectasis':'#9333ea',
+  'Pulmonary Hypertension':'#db2777','Pleural Disease':'#e11d48','Oxygen Therapy/Respiratory Failure':'#ea580c',
+  'Pulmonary Infections':'#d97706','Sleep Medicine':'#0891b2','Cystic Fibrosis':'#0284c7',
+  'Smoking Cessation':'#16a34a','Radiology':'#0d9488','PFT interpretation':'#92710f'
+};
+
+/* ---------- helpers ---------- */
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+function safeUrl(u){ u=String(u||'').trim(); if(!u||u==='#') return '#'; if(/^https?:\/\//i.test(u)||/^mailto:/i.test(u)) return u; return '#'; }
+function topicColor(name, idx){ return COLORMAP[name] || PALETTE[idx % PALETTE.length]; }
+function rgba(hex, a){ var h=(hex||'#000000').replace('#',''); if(h.length===3) h=h.split('').map(function(c){return c+c;}).join(''); var n=parseInt(h,16); return 'rgba('+((n>>16)&255)+','+((n>>8)&255)+','+(n&255)+','+a+')'; }
+function meta(type){ if(type==='rct') return {label:'Landmark RCTs',short:'RCT',color:'#0071e3'}; if(type==='review') return {label:'Major Reviews',short:'Review',color:'#7c5cdb'}; return {label:'Guidelines',short:'Guideline',color:'#34a875'}; }
+function decorate(study, type){ var m=meta(type); var ym=(study.title||'').match(/(19|20)\d{2}/); return {title:study.title,url:study.url||'#',type:type,color:m.color,typeShort:m.short,glow:rgba(m.color,0.22),year:ym?ym[0]:''}; }
+
+/* ---------- persistence ---------- */
+function load(){ try{ var s=localStorage.getItem('respHubData_v1'); if(s){ var p=JSON.parse(s); if(p&&typeof p==='object'&&Object.keys(p).length) return p; } }catch(e){} return null; }
+function persist(d){ try{ localStorage.setItem('respHubData_v1', JSON.stringify(d)); }catch(e){} }
+
+/* ---------- state ---------- */
+var state = (function(){
+  var d = load() || seedData();
+  var first = Object.keys(d)[0] || null;
+  var seen=false, authed=false;
+  try{ seen=!!localStorage.getItem('respHubSeen_v1'); }catch(e){}
+  try{ authed=sessionStorage.getItem('respHubAdmin_v1')==='1'; }catch(e){}
+  var theme = (document.documentElement.getAttribute('data-theme')==='dark') ? 'dark' : 'light';
+  var navStart = !(typeof window!=='undefined' && window.innerWidth<=760); // collapse the subspecialty list by default on phones
+  return { view:'browse', libMode:'browse', topicId:null, query:'', data:d, adminTopic:first, newSubName:'', renameValue:first||'', afType:'rct', afTitle:'', afUrl:'', editing:null, toast:'', navOpen:navStart, showHelp:!seen, confirmArticle:null, deleteSubTarget:null, deleteSubInput:'', adminAuthed:authed, askPassword:false, pwInput:'', pwError:false, theme:theme };
+})();
+
+function getData(){ return state.data || seedData(); }
+var _tt=null;
+function flash(msg){ state.toast=msg; render(); clearTimeout(_tt); _tt=setTimeout(function(){ state.toast=''; render(); }, 1800); }
+function commit(d, extra){ persist(d); Object.assign(state, {data:d}, extra||{}); }
+
+/* ---------- mutations ---------- */
+function addSub(){
+  var name=(state.newSubName||'').trim(); if(!name) return;
+  var d=getData(); if(d[name]){ flash('“'+name+'” already exists'); return; }
+  var nd=Object.assign({}, d); nd[name]={rct:[],review:[],guideline:[]};
+  commit(nd, {newSubName:'',adminTopic:name,renameValue:name,editing:null,afTitle:'',afUrl:'',afType:'rct',confirmArticle:null});
+  flash('Added '+name);
+}
+function deleteSub(name){
+  var d=getData(), nd={}; Object.keys(d).forEach(function(k){ if(k!==name) nd[k]=d[k]; });
+  var keys=Object.keys(nd), extra={};
+  if(state.adminTopic===name){ extra.adminTopic=keys[0]||null; extra.renameValue=keys[0]||''; extra.editing=null; }
+  commit(nd, extra); flash('Deleted '+name);
+}
+function renameSub(){
+  var oldN=state.adminTopic, newN=(state.renameValue||'').trim();
+  if(!oldN||!newN||newN===oldN) return;
+  var d=getData(); if(d[newN]){ flash('“'+newN+'” already in use'); return; }
+  var nd={}; Object.keys(d).forEach(function(k){ nd[k===oldN?newN:k]=d[k]; });
+  commit(nd, {adminTopic:newN}); flash('Renamed to '+newN);
+}
+function saveArticle(){
+  var afType=state.afType, editing=state.editing, adminTopic=state.adminTopic;
+  if(!adminTopic) return;
+  var title=(state.afTitle||'').trim(), url=(state.afUrl||'').trim();
+  if(!title){ flash('Title is required'); return; }
+  var d=getData(), src=d[adminTopic];
+  var t={rct:src.rct.slice(),review:src.review.slice(),guideline:src.guideline.slice()};
+  var entry={title:title, url:url||'#'};
+  if(editing){ if(editing.type===afType){ t[afType].splice(editing.index,1,entry); } else { t[editing.type].splice(editing.index,1); t[afType].push(entry); } }
+  else { t[afType].push(entry); }
+  var nd=Object.assign({}, d); nd[adminTopic]=t;
+  commit(nd, {afTitle:'',afUrl:'',editing:null});
+  flash(editing?'Article updated':'Article added');
+}
+function deleteArticle(type, index){
+  var adminTopic=state.adminTopic, editing=state.editing;
+  var d=getData(), src=d[adminTopic];
+  var t={rct:src.rct.slice(),review:src.review.slice(),guideline:src.guideline.slice()};
+  t[type].splice(index,1);
+  var nd=Object.assign({}, d); nd[adminTopic]=t;
+  var extra={confirmArticle:null};
+  if(editing&&editing.type===type){ extra.editing=null; extra.afTitle=''; extra.afUrl=''; }
+  commit(nd, extra); flash('Article removed');
+}
+function editArticle(type, index){
+  var it=getData()[state.adminTopic][type][index];
+  setState({afType:type, afTitle:it.title, afUrl:it.url==='#'?'':it.url, editing:{type:type,index:index}, confirmArticle:null});
+}
+function selectAdminTopic(name){ setState({adminTopic:name, renameValue:name, editing:null, afType:'rct', afTitle:'', afUrl:'', confirmArticle:null}); }
+function submitPassword(){
+  if(state.pwInput===ADMIN_PASSWORD){ try{ sessionStorage.setItem('respHubAdmin_v1','1'); }catch(e){} setState({adminAuthed:true, askPassword:false, pwInput:'', pwError:false, view:'admin'}); }
+  else { setState({pwError:true}); }
+}
+
+/* ---------- search intent ("looking for…") ---------- */
+var SEARCH_FILLERS={most:1,latest:1,newest:1,recent:1,recently:1,updated:1,update:1,current:1,'new':1,information:1,info:1,on:1,'for':1,the:1,a:1,an:1,'of':1,'in':1,about:1,me:1,i:1,am:1,looking:1,find:1,show:1,what:1,whats:1,is:1,to:1,and:1,'with':1,best:1,any:1,'data':1,evidence:1,please:1};
+var RECENCY_WORDS={latest:1,newest:1,recent:1,recently:1,updated:1,update:1,current:1,'new':1,most:1};
+var TOPIC_ALIAS={'sleep apnea':'Sleep Medicine',osa:'Sleep Medicine',apnea:'Sleep Medicine',cpap:'Sleep Medicine',ipf:'ILD','pulmonary fibrosis':'ILD',fibrosis:'ILD',interstitial:'ILD',pah:'Pulmonary Hypertension','pulmonary htn':'Pulmonary Hypertension',emphysema:'COPD','chronic bronchitis':'COPD',pft:'PFT interpretation',spirometry:'PFT interpretation','lung function':'PFT interpretation',cf:'Cystic Fibrosis',smoking:'Smoking Cessation',nicotine:'Smoking Cessation',vaping:'Smoking Cessation',pneumonia:'Pulmonary Infections',tuberculosis:'Pulmonary Infections',tb:'Pulmonary Infections',aspergillosis:'Pulmonary Infections',infection:'Pulmonary Infections',effusion:'Pleural Disease',empyema:'Pleural Disease',pneumothorax:'Pleural Disease',pleural:'Pleural Disease',hrct:'Radiology',imaging:'Radiology',hfnc:'Oxygen Therapy/Respiratory Failure',niv:'Oxygen Therapy/Respiratory Failure',ards:'Oxygen Therapy/Respiratory Failure','respiratory failure':'Oxygen Therapy/Respiratory Failure',oxygen:'Oxygen Therapy/Respiratory Failure'};
+function coreTermsOf(q){ return q.split(/[^a-z0-9]+/).filter(function(w){ return w.length>=2 && !SEARCH_FILLERS[w]; }); }
+function hasRecencyIntent(q){ return q.split(/[^a-z0-9]+/).some(function(w){ return RECENCY_WORDS[w]; }); }
+function resolveTopic(q, terms, repo, names){ for(var p in TOPIC_ALIAS){ if(q.indexOf(p)>=0 && repo[TOPIC_ALIAS[p]]) return TOPIC_ALIAS[p]; } var best=null,bs=0; names.forEach(function(n){ var nl=n.toLowerCase(),sc=0; terms.forEach(function(t){ if(t.length>=3 && (nl.indexOf(t)>=0 || t.indexOf(nl)>=0)) sc++; }); if(sc>bs){ bs=sc; best=n; } }); return bs>0?best:null; }
+
+/* ---------- render ---------- */
+var app=document.getElementById('app');
+var lastAnimKey;
+function animKey(){ if(state.view==='admin') return 'admin|'+(state.adminTopic||''); return 'lib|'+(state.query.trim()?'search':(state.libMode==='saved'?'saved':(state.topicId||''))); }
+
+function dot(color, glow, size){ return '<span data-glow style="width:'+size+'px;height:'+size+'px;border-radius:50%;flex:none;background:'+color+';--dot:'+glow+';box-shadow:0 0 4px 1px var(--dot);animation:rhGlow 2.6s ease-in-out infinite;"></span>'; }
+
+function cardArrow(stroke, sz, mt){ return '<svg width="'+sz+'" height="'+sz+'" viewBox="0 0 24 24" fill="none" stroke="'+stroke+'" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"'+(mt?' style="margin-top:'+mt+'px;"':'')+'><path d="M7 17L17 7"></path><path d="M8 7h9v9"></path></svg>'; }
+
+/* ---------- saved / favorites (localStorage) ---------- */
+function loadSaved(){ try{ var s=JSON.parse(localStorage.getItem('respHubSaved_v1')||'[]'); var o={}; if(Array.isArray(s)) s.forEach(function(k){ o[k]=true; }); return o; }catch(e){ return {}; } }
+function persistSaved(){ try{ localStorage.setItem('respHubSaved_v1', JSON.stringify(Object.keys(SAVED))); }catch(e){} }
+var SAVED = loadSaved();
+function savedKey(topic, type, title){ return topic+''+type+''+title; }
+function collectSaved(repo){ var out=[]; Object.keys(repo).forEach(function(name){ ['rct','review','guideline'].forEach(function(type){ repo[name][type].forEach(function(s){ if(SAVED[savedKey(name,type,s.title)]) out.push(Object.assign(decorate(s,type),{topicName:name})); }); }); }); return out; }
+
+var STAR_PATH = 'M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 17.9 6.8 19.6l1-5.8L3.5 9.7l5.9-.9z';
+function starBtn(key, on){
+  return '<button class="rh-iconbtn rh-star'+(on?' on':'')+'" data-act="toggleSave" data-key="'+esc(key)+'" aria-pressed="'+(on?'true':'false')+'" aria-label="'+(on?'Remove from saved':'Save to your list')+'" title="'+(on?'Saved':'Save')+'"><svg width="15" height="15" viewBox="0 0 24 24" fill="'+(on?'currentColor':'none')+'" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="'+STAR_PATH+'"></path></svg></button>';
+}
+function copyBtn(url){
+  return '<button class="rh-iconbtn rh-copy" data-act="copyLink" data-url="'+esc(safeUrl(url))+'" aria-label="Copy link to this paper" title="Copy link"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15V5a2 2 0 0 1 2-2h10"></path></svg></button>';
+}
+function shareBtn(){ return '<button class="rh-sharebtn" data-act="copyViewLink" aria-label="Copy a shareable link to this view" title="Copy a shareable link" style="margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-family:inherit;font-size:12px;font-weight:600;color:#0071e3;background:rgba(0,113,227,0.08);border:none;cursor:pointer;border-radius:8px;padding:6px 11px;flex:none;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.5 1.5"></path><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.5-1.5"></path></svg>Copy link</button>'; }
+/* Unified paper card: a real <a> for the paper + sibling action buttons (valid HTML, keeps cmd/middle-click) */
+function paperCard(item, topicName, mode){
+  var key=savedKey(topicName, item.type, item.title);
+  var on=!!SAVED[key];
+  var hasUrl=safeUrl(item.url)!=='#';
+  var pos=mode==='browse'?'top:50%;right:12px;transform:translateY(-50%);':'top:11px;right:11px;';
+  var actions='<div class="rh-actions" style="'+pos+'">'+(item.year?'<span class="rh-year">'+esc(item.year)+'</span>':'')+(hasUrl?copyBtn(item.url):'')+starBtn(key,on)+'</div>';
+  var open='<a class="rh-card" href="'+esc(safeUrl(item.url))+'" target="_blank" rel="noopener noreferrer" style="--glow:'+item.glow+';--bc:'+item.color+';text-decoration:none;background:var(--surface);border:1px solid var(--border);border-left:3px solid '+item.color+';border-radius:12px;';
+  if(mode==='browse'){
+    open+='display:block;padding:14px 104px 14px 16px;"><span style="font-size:13px;font-weight:500;line-height:1.5;color:var(--text);">'+esc(item.title)+'</span></a>';
+    return '<div class="rh-cardwrap" style="display:block;">'+open+actions+'</div>';
+  }
+  open+='display:block;padding:14px 104px 14px 16px;"><div style="display:flex;align-items:center;gap:7px;margin-bottom:9px;min-width:0;"><span style="width:6px;height:6px;border-radius:50%;background:'+item.color+';flex:none;"></span><span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:'+item.color+';flex:none;">'+esc(item.typeShort)+'</span><span style="font-size:11px;font-weight:500;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(item.topicName||topicName)+'</span></div><div style="font-size:13px;font-weight:500;line-height:1.5;color:var(--text);">'+esc(item.title)+'</div></a>';
+  return '<div class="rh-cardwrap rh-anim" style="display:block;flex:1 1 320px;max-width:520px;">'+open+actions+'</div>';
+}
+
+function copyText(t, msg){ try{ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(t).then(function(){ flash(msg); }, function(){ fallbackCopy(t,msg); }); return; } }catch(e){} fallbackCopy(t,msg); }
+function fallbackCopy(t, msg){ try{ var ta=document.createElement('textarea'); ta.value=t; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.focus(); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); flash(msg); }catch(e){ flash('Copy failed'); } }
+
+/* ---------- shareable deep links (hash) ---------- */
+function readHash(){ var h=(location.hash||'').replace(/^#/,''); if(!h) return {}; if(h==='saved') return {libMode:'saved'}; if(h.indexOf('q=')===0) return {query:decodeURIComponent(h.slice(2))}; if(h.indexOf('sub=')===0) return {topicId:decodeURIComponent(h.slice(4))}; return {}; }
+function writeHash(){ var h=''; if(state.view!=='admin'){ if((state.query||'').trim()) h='q='+encodeURIComponent(state.query.trim()); else if(state.libMode==='saved') h='saved'; else if(state.topicId) h='sub='+encodeURIComponent(state.topicId); } var nh=h?('#'+h):''; if((location.hash||'')!==nh){ try{ history.replaceState(null,'',location.pathname+location.search+nh); }catch(e){} } }
+
+function render(){
+  var ak=animKey();
+  var animOn = ak!==lastAnimKey;
+  var riseA=function(d){ return animOn?('animation:rhRise '+d+'s ease both;'):''; };
+  var slideA=function(d){ return animOn?('animation:rhSlideT '+d+'s ease both;'):''; };
+
+  var repo=getData();
+  var names=Object.keys(repo);
+  var order=['rct','review','guideline'];
+  var savedItems=collectSaved(repo);
+  var savedCount=savedItems.length;
+  var totalRecords=names.reduce(function(a,n){ return a+repo[n].rct.length+repo[n].review.length+repo[n].guideline.length; },0);
+  var currentName=(state.topicId&&repo[state.topicId])?state.topicId:(names[0]||'');
+  var q=(state.query||'').trim().toLowerCase();
+  var searchActive=q.length>0;
+  var savedActive=state.libMode==='saved'&&!searchActive;
+  var view=state.view;
+  var tabOn={bg:'var(--seg-active)',fg:'var(--text)',shadow:'0 1px 3px rgba(0,0,0,0.12)'};
+  var tabOff={bg:'transparent',fg:'var(--muted)',shadow:'none'};
+  var libTab=view==='admin'?tabOff:tabOn, admTab=view==='admin'?tabOn:tabOff;
+
+  var html='';
+  html+='<div style="min-height:100vh;display:flex;flex-direction:column;background:var(--bg);position:relative;">';
+
+  /* nav */
+  html+='<nav data-print-hide class="rh-nav" style="position:sticky;top:0;z-index:50;height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;background:var(--nav-bg);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid var(--border);">';
+  html+='<div data-act="resetDash" style="display:flex;align-items:center;gap:9px;cursor:pointer;">';
+  html+='<div style="width:22px;height:22px;border-radius:7px;background:#0071e3;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,113,227,0.25);"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg></div>';
+  html+='<span class="rh-word" style="font-size:15px;font-weight:600;letter-spacing:-0.01em;color:var(--text);">Respirology Hub</span></div>';
+  html+='<div style="display:flex;align-items:center;gap:14px;">';
+  html+='<div style="display:flex;background:var(--border);border-radius:9px;padding:2px;gap:2px;">';
+  html+='<button data-act="goLibrary" style="font-family:inherit;font-size:12px;font-weight:600;border:none;cursor:pointer;border-radius:7px;padding:6px 14px;transition:all .18s ease;background:'+libTab.bg+';color:'+libTab.fg+';box-shadow:'+libTab.shadow+';">Library</button>';
+  html+='<button data-act="goAdmin" style="display:inline-flex;align-items:center;gap:5px;font-family:inherit;font-size:12px;font-weight:600;border:none;cursor:pointer;border-radius:7px;padding:6px 13px;transition:all .18s ease;background:'+admTab.bg+';color:'+admTab.fg+';box-shadow:'+admTab.shadow+';">';
+  if(!state.adminAuthed) html+='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.75;"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>';
+  html+='Admin</button></div>';
+  html+='<button data-act="toggleTheme" class="rh-help" aria-label="Toggle light or dark theme" title="Toggle light / dark" style="width:30px;height:30px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border-2);background:var(--surface);border-radius:50%;cursor:pointer;color:var(--text-2);">'+(state.theme==='dark'?'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M6.3 17.7l-1.4 1.4M19.1 4.9l-1.4 1.4"></path></svg>':'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z"></path></svg>')+'</button>';
+  html+='<button data-act="openHelp" class="rh-help" aria-label="How to use this site" title="How to use" style="width:30px;height:30px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border-2);background:var(--surface);border-radius:50%;cursor:pointer;color:var(--text-2);font-family:inherit;font-size:14px;font-weight:700;">?</button>';
+  html+='</div></nav>';
+
+  html+='<main class="rh-main" style="flex:1 1 auto;max-width:1180px;width:100%;margin:0 auto;padding:52px 28px 80px;position:relative;z-index:1;">';
+
+  if(view!=='admin'){
+    html+='<div>';
+    /* hero */
+    html+='<header class="rh-hero" data-reveal style="margin-bottom:34px;'+riseA('.5')+'"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#0071e3;margin-bottom:14px;">A Dynamic Digital Archive</div><h1 style="font-size:40px;font-weight:700;letter-spacing:-0.02em;line-height:1.05;margin:0 0 14px;color:var(--text);width:fit-content;">Resp Hub</h1><p style="font-size:15px;font-weight:400;line-height:1.5;color:var(--text-2);margin:0;max-width:580px;">An interactive index of clinical trials, landmark systematic reviews, and society guidelines defining modern respiratory medicine.</p><p class="rh-stats" style="font-size:12px;color:var(--muted);margin:13px 0 0;display:flex;gap:14px;flex-wrap:wrap;"><span><strong style="color:var(--text);font-weight:600;">'+totalRecords+'</strong> records</span><span><strong style="color:var(--text);font-weight:600;">'+names.length+'</strong> subspecialties</span>'+(savedCount?('<span><strong style="color:var(--text);font-weight:600;">'+savedCount+'</strong> saved</span>'):'')+'</p></header>';
+    /* search */
+    html+='<div data-print-hide data-reveal style="position:relative;max-width:440px;margin-bottom:36px;'+riseA('.55')+'">';
+    html+='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="position:absolute;left:15px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--muted);"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg>';
+    html+='<input id="globalSearch" data-model="query" type="text" aria-label="Search trials, journals, or guidelines" placeholder="Search trials, journals, or guidelines…" value="'+esc(state.query)+'" autocomplete="off" spellcheck="false" class="rh-search" style="width:100%;height:44px;padding:0 88px 0 42px;font-family:inherit;font-size:14px;color:var(--text);background:var(--surface);border:1px solid var(--border-2);border-radius:12px;outline:none;">';
+    html+='<kbd style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-family:inherit;font-size:10px;font-weight:500;color:var(--muted);border:1px solid var(--border-2);border-radius:5px;padding:3px 7px;background:var(--fill);pointer-events:none;">⌘K</kbd></div>';
+
+    html+='<div class="rh-cols" style="display:flex;gap:40px;align-items:flex-start;">';
+    /* sidebar */
+    html+='<aside class="rh-side" data-print-hide data-reveal style="flex:0 0 218px;position:sticky;top:80px;'+riseA('.6')+'">';
+    html+='<button class="rh-topic" data-act="goSaved" aria-pressed="'+(savedActive?'true':'false')+'" style="--hbg:'+(savedActive?'#0071e3':'var(--hover-soft)')+';display:flex;align-items:center;gap:11px;width:100%;text-align:left;font-family:inherit;font-size:13px;font-weight:600;border:none;cursor:pointer;border-radius:9px;padding:9px 12px;margin-bottom:12px;background:'+(savedActive?'#0071e3':'transparent')+';color:'+(savedActive?'#ffffff':'var(--text)')+';box-shadow:'+(savedActive?'0 5px 16px rgba(0,113,227,0.35)':'none')+';"><svg width="14" height="14" viewBox="0 0 24 24" fill="'+(savedActive?'currentColor':'none')+'" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;"><path d="'+STAR_PATH+'"></path></svg><span style="flex:1 1 auto;">Saved</span><span style="font-size:11px;font-weight:600;color:'+(savedActive?'rgba(255,255,255,0.75)':'var(--muted)')+';flex:none;">'+savedCount+'</span></button>';
+    html+='<button data-act="toggleNav" style="display:flex;align-items:center;justify-content:space-between;width:100%;background:none;border:none;cursor:pointer;font-family:inherit;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);padding:0 12px 12px;"><span>Subspecialties</span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .2s ease;transform:'+(state.navOpen?'rotate(0deg)':'rotate(-90deg)')+';"><path d="M6 9l6 6 6-6"></path></svg></button>';
+    if(state.navOpen){
+      html+='<nav style="display:flex;flex-direction:column;gap:3px;">';
+      names.forEach(function(name, idx){
+        var t=repo[name], color=topicColor(name, idx);
+        var count=t.rct.length+t.review.length+t.guideline.length;
+        var active=name===currentName&&!searchActive&&!savedActive;
+        var bg=active?color:'transparent';
+        var hbg=active?color:'var(--hover-soft)';
+        var fg=active?'#ffffff':'var(--text)';
+        var countFg=active?'rgba(255,255,255,0.75)':'var(--muted)';
+        var dcol=active?'#ffffff':color;
+        var glow=active?'rgba(255,255,255,0.85)':rgba(color,0.7);
+        var shadow=active?('0 5px 16px '+rgba(color,0.35)):'none';
+        html+='<button class="rh-topic" data-act="selectTopic" data-name="'+esc(name)+'" style="--hbg:'+hbg+';display:flex;align-items:center;gap:11px;width:100%;text-align:left;font-family:inherit;font-size:13px;font-weight:500;line-height:1.3;border:none;cursor:pointer;border-radius:9px;padding:9px 12px;background:'+bg+';color:'+fg+';box-shadow:'+shadow+';">'+dot(dcol,glow,7)+'<span style="flex:1 1 auto;">'+esc(name)+'</span><span style="font-size:11px;font-weight:600;color:'+countFg+';flex:none;">'+count+'</span></button>';
+      });
+      html+='</nav>';
+    }
+    html+='</aside>';
+
+    /* content */
+    html+='<section style="flex:1 1 auto;min-width:0;">';
+    if(searchActive){
+      var terms=coreTermsOf(q);
+      var recency=hasRecencyIntent(q);
+      var suggest=resolveTopic(q, terms, repo, names);
+      var results=[], seen={};
+      names.forEach(function(name){ order.forEach(function(type){ repo[name][type].forEach(function(study){
+        var hay=(study.title+' '+name).toLowerCase();
+        var termMatch=terms.length>0 && terms.every(function(t){ return hay.indexOf(t)>=0; });
+        if(termMatch || (suggest && name===suggest)){ var k=name+'|'+type+'|'+study.title; if(!seen[k]){ seen[k]=1; results.push(Object.assign(decorate(study,type), {topicName:name})); } }
+      }); }); });
+      if(recency) results.sort(function(a,b){ return (parseInt(b.year,10)||0)-(parseInt(a.year,10)||0); });
+      html+='<div data-reveal style="'+slideA('.2')+'">';
+      html+='<div style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px;flex-wrap:wrap;"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><p style="font-size:13px;color:var(--text-2);margin:0;"><strong style="color:var(--text);font-weight:600;">'+results.length+'</strong> records across the archive matching &ldquo;'+esc(state.query)+'&rdquo;</p>'+(recency?'<span style="font-size:11px;font-weight:600;color:var(--text-2);background:var(--fill);border-radius:100px;padding:3px 10px;display:inline-flex;align-items:center;gap:5px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"></path><path d="M19 12l-7 7-7-7"></path></svg>Newest first</span>':'')+'</div><button data-act="clearSearch" style="font-family:inherit;font-size:13px;font-weight:500;color:#0071e3;background:none;border:none;cursor:pointer;padding:0;flex:none;">Clear search</button></div>';
+      if(suggest){
+        var sIdx=names.indexOf(suggest), sColor=topicColor(suggest, sIdx<0?0:sIdx);
+        var sCount=repo[suggest].rct.length+repo[suggest].review.length+repo[suggest].guideline.length;
+        html+='<button class="rh-suggest" data-act="selectTopic" data-name="'+esc(suggest)+'" style="--hbg:'+rgba(sColor,0.16)+';display:flex;align-items:center;gap:11px;width:100%;text-align:left;border:1px solid '+rgba(sColor,0.35)+';background:'+rgba(sColor,0.08)+';border-radius:12px;padding:12px 14px;margin-bottom:16px;cursor:pointer;font-family:inherit;"><span style="width:9px;height:9px;border-radius:50%;flex:none;background:'+sColor+';box-shadow:0 0 0 4px '+rgba(sColor,0.15)+';"></span><span style="flex:1 1 auto;font-size:13px;color:var(--text);">Looking for <strong style="font-weight:700;">'+esc(suggest)+'</strong>? Browse all '+sCount+' organized records.</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="'+sColor+'" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="flex:none;"><path d="M5 12h14"></path><path d="M13 6l6 6-6 6"></path></svg></button>';
+      }
+      if(results.length){
+        html+='<div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;">';
+        results.forEach(function(item){ html+=paperCard(item, item.topicName, 'search'); });
+        html+='</div>';
+      } else {
+        html+='<div style="border:1px dashed var(--border-2);border-radius:14px;padding:48px 24px;text-align:center;"><p style="font-size:14px;font-weight:500;color:var(--text-2);margin:0 0 4px;">No records match &ldquo;'+esc(state.query)+'&rdquo;</p><p style="font-size:13px;color:var(--muted);margin:0;">Try a drug name, trial acronym, journal, or a topic like &ldquo;asthma&rdquo; or &ldquo;sleep apnea&rdquo;.</p></div>';
+      }
+      html+='</div>';
+    } else if(savedActive){
+      html+='<div data-reveal style="'+slideA('.2')+'">';
+      html+='<div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;flex-wrap:wrap;"><svg width="20" height="20" viewBox="0 0 24 24" fill="#f5a623" stroke="#f5a623" stroke-width="1.5" stroke-linejoin="round" style="flex:none;"><path d="'+STAR_PATH+'"></path></svg><h2 style="font-size:22px;font-weight:700;letter-spacing:-0.015em;color:var(--text);margin:0;">Saved</h2><span style="font-size:12px;font-weight:600;color:#b8860b;background:rgba(245,166,35,0.16);border-radius:100px;padding:3px 11px;">'+savedCount+(savedCount===1?' record':' records')+'</span>'+(savedCount?shareBtn():'')+'</div>';
+      if(savedCount){
+        html+='<div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;">';
+        savedItems.forEach(function(item){ html+=paperCard(item, item.topicName, 'search'); });
+        html+='</div>';
+      } else {
+        html+='<div style="border:1px dashed var(--border-2);border-radius:14px;padding:48px 24px;text-align:center;"><p style="font-size:14px;font-weight:500;color:var(--text-2);margin:0 0 4px;">No saved records yet</p><p style="font-size:13px;color:var(--muted);margin:0;">Tap the star on any card to keep it here for quick access across every visit.</p></div>';
+      }
+      html+='</div>';
+    } else {
+      var cIdx=names.indexOf(currentName);
+      var cColor=topicColor(currentName, cIdx<0?0:cIdx);
+      var cTint=rgba(cColor,0.12);
+      var current=repo[currentName]||{rct:[],review:[],guideline:[]};
+      var cCount=current.rct.length+current.review.length+current.guideline.length;
+      html+='<div><div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;flex-wrap:wrap;"><span style="width:10px;height:10px;border-radius:50%;flex:none;background:'+cColor+';box-shadow:0 0 0 4px '+cTint+';"></span><h2 style="font-size:22px;font-weight:700;letter-spacing:-0.015em;color:var(--text);margin:0;">'+esc(currentName)+'</h2><span style="font-size:12px;font-weight:600;color:'+cColor+';background:'+cTint+';border-radius:100px;padding:3px 11px;">'+cCount+' records</span>'+shareBtn()+'</div>';
+      html+='<div style="display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start;">';
+      order.forEach(function(type){
+        var items=current[type].map(function(s){ return decorate(s,type); });
+        if(!items.length) return;
+        var m=meta(type), tint=rgba(m.color,0.1);
+        html+='<div class="rh-anim" style="flex:1 1 340px;max-width:520px;min-width:280px;">';
+        html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;padding-bottom:11px;border-bottom:1px solid var(--border);"><span style="width:7px;height:7px;border-radius:50%;background:'+m.color+';"></span><span style="font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-2);">'+esc(m.label)+'</span><span style="font-size:11px;font-weight:600;color:'+m.color+';background:'+tint+';border-radius:6px;padding:1px 7px;">'+items.length+'</span></div>';
+        html+='<div style="display:flex;flex-direction:column;gap:10px;">';
+        items.forEach(function(item){ html+=paperCard(item, currentName, 'browse'); });
+        html+='</div></div>';
+      });
+      html+='</div></div>';
+    }
+    html+='</section></div></div>';
+  } else {
+    /* ----- admin ----- */
+    var adminTopic=(state.adminTopic&&repo[state.adminTopic])?state.adminTopic:(names[0]||null);
+    html+='<div data-reveal style="'+slideA('.25')+'">';
+    html+='<header style="margin-bottom:30px;"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#7c3aed;margin-bottom:12px;">Manage the Archive</div><h1 style="font-size:32px;font-weight:700;letter-spacing:-0.02em;line-height:1.1;margin:0 0 8px;color:var(--text);">Content Admin</h1><p style="font-size:14px;color:var(--text-2);margin:0;max-width:560px;">Add or remove subspecialties and curate the trials, reviews, and guidelines under each. Changes save to this browser instantly.</p></header>';
+    html+='<div class="rh-cols" style="display:flex;gap:32px;align-items:flex-start;">';
+    /* subspecialties panel */
+    html+='<aside class="rh-side" style="flex:0 0 280px;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--muted);margin-bottom:12px;">Subspecialties</div><div style="display:flex;flex-direction:column;gap:4px;margin-bottom:16px;">';
+    names.forEach(function(name, idx){
+      var t=repo[name], color=topicColor(name, idx);
+      var active=name===adminTopic;
+      var bg=active?rgba(color,0.1):'transparent';
+      var hbg=active?rgba(color,0.1):'var(--hover-soft)';
+      var fg=active?'var(--text)':'var(--text-3)';
+      var count=t.rct.length+t.review.length+t.guideline.length;
+      html+='<div class="rh-arow" style="--hbg:'+hbg+';display:flex;align-items:center;gap:8px;border-radius:9px;padding:7px 8px 7px 11px;background:'+bg+';"><span style="width:8px;height:8px;border-radius:50%;flex:none;background:'+color+';"></span><button data-act="selectAdminTopic" data-name="'+esc(name)+'" style="flex:1 1 auto;min-width:0;text-align:left;font-family:inherit;font-size:13px;font-weight:500;border:none;background:none;cursor:pointer;padding:0;color:'+fg+';overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(name)+'</button><span style="font-size:11px;font-weight:600;color:var(--muted);flex:none;">'+count+'</span><button class="rh-xbtn" data-act="askDeleteSub" data-name="'+esc(name)+'" title="Delete subspecialty" style="flex:none;width:20px;height:20px;display:flex;align-items:center;justify-content:center;border:none;background:none;cursor:pointer;color:var(--icon-faint);border-radius:6px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></div>';
+    });
+    html+='</div><div style="display:flex;gap:8px;padding-top:14px;border-top:1px solid var(--grey-btn);"><input id="newSubName" data-model="newSubName" data-enter="addSub" type="text" placeholder="New subspecialty" value="'+esc(state.newSubName)+'" class="rh-input" style="flex:1 1 auto;min-width:0;height:36px;padding:0 12px;font-family:inherit;font-size:13px;color:var(--text);background:var(--fill);border:1px solid var(--border-3);border-radius:9px;outline:none;"><button class="rh-lift" data-act="addSub" title="Add subspecialty" style="flex:none;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;border-radius:9px;background:#0071e3;color:#fff;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></button></div></aside>';
+
+    /* editor */
+    html+='<section style="flex:1 1 auto;min-width:0;">';
+    if(adminTopic){
+      var aIdx=names.indexOf(adminTopic);
+      var aColor=topicColor(adminTopic, aIdx<0?0:aIdx);
+      var aTint=rgba(aColor,0.12);
+      var aSrc=repo[adminTopic];
+      var aCount=aSrc.rct.length+aSrc.review.length+aSrc.guideline.length;
+      var cA=state.confirmArticle;
+      html+='<div><div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:8px;"><span style="width:11px;height:11px;border-radius:50%;flex:none;background:'+aColor+';box-shadow:0 0 0 4px '+aTint+';"></span><input id="renameValue" data-model="renameValue" type="text" value="'+esc(state.renameValue)+'" class="rh-rename" style="--fc:'+aColor+';flex:1 1 220px;min-width:0;font-family:inherit;font-size:22px;font-weight:700;letter-spacing:-0.015em;color:var(--text);background:none;border:none;border-bottom:2px solid transparent;outline:none;padding:2px 0;"><button class="rh-renamebtn" data-act="rename" style="flex:none;font-family:inherit;font-size:12px;font-weight:600;color:#0071e3;background:rgba(0,113,227,0.08);border:none;cursor:pointer;border-radius:8px;padding:7px 13px;">Rename</button></div><p style="font-size:13px;color:var(--muted);margin:0 0 26px;padding-left:23px;">'+aCount+' records in this subspecialty</p>';
+      html+='<div style="display:flex;flex-direction:column;gap:22px;margin-bottom:30px;">';
+      order.forEach(function(type){
+        var m=meta(type), tint=rgba(m.color,0.1);
+        var arr=aSrc[type];
+        html+='<div class="rh-anim"><div style="display:flex;align-items:center;gap:8px;margin-bottom:11px;"><span style="width:7px;height:7px;border-radius:50%;background:'+m.color+';"></span><span style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-2);">'+esc(m.label)+'</span><span style="font-size:11px;font-weight:600;color:'+m.color+';background:'+tint+';border-radius:6px;padding:1px 7px;">'+arr.length+'</span></div>';
+        if(!arr.length) html+='<p style="font-size:13px;color:var(--faint-2);margin:0 0 0 15px;font-style:italic;">No records yet.</p>';
+        html+='<div style="display:flex;flex-direction:column;gap:7px;">';
+        arr.forEach(function(s, index){
+          var confirming=!!(cA&&cA.type===type&&cA.index===index);
+          if(confirming){
+            html+='<div><div style="display:flex;align-items:center;gap:10px;background:rgba(255,59,48,0.06);border:1px solid rgba(255,59,48,0.2);border-left:3px solid #ff3b30;border-radius:10px;padding:11px 13px;"><span style="flex:1 1 auto;min-width:0;font-size:13px;font-weight:600;color:#ff3b30;">Delete this article?</span><button data-act="confirmDeleteArticle" data-type="'+type+'" data-index="'+index+'" style="flex:none;font-family:inherit;font-size:12px;font-weight:700;color:#fff;background:#ff3b30;border:none;cursor:pointer;border-radius:7px;padding:6px 12px;">Delete</button><button data-act="cancelDeleteArticle" style="flex:none;font-family:inherit;font-size:12px;font-weight:600;color:var(--text-2);background:none;border:none;cursor:pointer;padding:6px 4px;">Cancel</button></div></div>';
+          } else {
+            html+='<div><div style="display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-left:3px solid '+m.color+';border-radius:10px;padding:11px 13px;"><div style="flex:1 1 auto;min-width:0;"><div style="font-size:13px;font-weight:500;line-height:1.45;color:var(--text);">'+esc(s.title)+'</div><div style="font-size:11px;color:var(--faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px;">'+esc(s.url)+'</div></div><button class="rh-iconedit" data-act="editArticle" data-type="'+type+'" data-index="'+index+'" title="Edit" style="flex:none;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;border-radius:7px;background:var(--fill);color:var(--text-2);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg></button><button class="rh-icondel" data-act="askDeleteArticle" data-type="'+type+'" data-index="'+index+'" title="Delete" style="flex:none;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;border-radius:7px;background:var(--fill);color:var(--text-2);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="M19 6l-1 14H6L5 6"></path></svg></button></div></div>';
+          }
+        });
+        html+='</div></div>';
+      });
+      html+='</div>';
+      /* add/edit form */
+      var isEditing=!!state.editing;
+      html+='<div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px;"><div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:16px;">'+(isEditing?'Edit article':'Add article')+'</div><div style="display:flex;gap:6px;margin-bottom:14px;">';
+      order.forEach(function(type){
+        var m=meta(type), on=state.afType===type;
+        html+='<button data-act="typeOpt" data-type="'+type+'" style="flex:1 1 auto;font-family:inherit;font-size:12px;font-weight:600;border:1px solid '+(on?m.color:'var(--border-3)')+';cursor:pointer;border-radius:9px;padding:9px 8px;transition:all .15s ease;background:'+(on?rgba(m.color,0.12):'var(--surface)')+';color:'+(on?m.color:'var(--muted)')+';">'+esc(m.short)+'</button>';
+      });
+      html+='</div><input id="afTitle" data-model="afTitle" type="text" placeholder="Article title (e.g. ETHOS (Breztri) NEJM 2020)" value="'+esc(state.afTitle)+'" class="rh-input" style="width:100%;height:42px;padding:0 14px;font-family:inherit;font-size:14px;color:var(--text);background:var(--fill);border:1px solid var(--border-3);border-radius:10px;outline:none;margin-bottom:10px;"><input id="afUrl" data-model="afUrl" type="text" placeholder="Link URL (https://…)" value="'+esc(state.afUrl)+'" class="rh-input" style="width:100%;height:42px;padding:0 14px;font-family:inherit;font-size:14px;color:var(--text);background:var(--fill);border:1px solid var(--border-3);border-radius:10px;outline:none;margin-bottom:16px;"><div style="display:flex;gap:10px;"><button class="rh-lift" data-act="saveArticle" style="font-family:inherit;font-size:13px;font-weight:600;border:none;cursor:pointer;border-radius:10px;padding:11px 20px;background:#0071e3;color:#fff;">'+(isEditing?'Save changes':'Add article')+'</button>';
+      if(isEditing) html+='<button class="rh-grey" data-act="cancelEdit" style="font-family:inherit;font-size:13px;font-weight:600;border:none;cursor:pointer;border-radius:10px;padding:11px 18px;background:var(--grey-btn);color:var(--text-2);">Cancel</button>';
+      html+='</div></div></div>';
+    } else {
+      html+='<div style="border:1px dashed var(--border-2);border-radius:16px;padding:60px 24px;text-align:center;"><p style="font-size:14px;font-weight:500;color:var(--text-2);margin:0 0 4px;">No subspecialties yet</p><p style="font-size:13px;color:var(--muted);margin:0;">Add one on the left to begin curating articles.</p></div>';
+    }
+    html+='</section></div></div>';
+  }
+
+  html+='</main>';
+
+  /* footer */
+  html+='<footer data-print-hide style="border-top:1px solid var(--border);background:var(--surface);padding:28px 0;"><div style="max-width:1180px;margin:0 auto;padding:0 28px;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;font-size:12px;color:var(--muted);"><span>© 2026 Respirology Hub Repository.</span><span>Curated from active clinical-trials literature.</span></div></footer>';
+
+  /* toast */
+  if(state.toast) html+='<div data-print-hide role="status" aria-live="polite" style="position:fixed;bottom:28px;left:50%;z-index:120;display:flex;align-items:center;gap:9px;background:var(--toast-bg);color:var(--toast-fg);border-radius:100px;padding:10px 20px;font-size:13px;font-weight:500;box-shadow:0 10px 30px rgba(0,0,0,0.25);animation:rhToast .25s ease both;"><span style="width:7px;height:7px;border-radius:50%;background:#34c759;box-shadow:0 0 0 4px rgba(52,199,89,0.25);"></span>'+esc(state.toast)+'</div>';
+
+  /* help modal */
+  if(state.showHelp){
+    var steps=[['rgba(0,113,227,0.12)','#0071e3','Pick a subspecialty on the left to see its landmark trials, reviews, and guidelines.'],['rgba(124,92,219,0.14)','#7c5cdb','Every card links to the source. Click it to open the paper in a new tab.'],['rgba(52,168,117,0.14)','#34a875','Press Cmd K or Ctrl K at any time to search every record at once.'],['rgba(234,88,12,0.12)','#ea580c','Open the Admin tab to add or update articles. Your changes save on this device.']];
+    html+='<div data-print-hide data-act="closeHelp" style="position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--scrim);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);animation:rhPop .2s ease both;"><div data-act="stop" style="width:100%;max-width:444px;background:var(--surface);border-radius:20px;padding:30px;box-shadow:0 24px 60px rgba(0,0,0,0.3);animation:rhPop .3s ease both;"><div style="display:flex;align-items:center;gap:11px;margin-bottom:6px;"><div style="width:32px;height:32px;border-radius:9px;background:#0071e3;display:flex;align-items:center;justify-content:center;flex:none;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg></div><h2 style="font-size:20px;font-weight:700;color:var(--text);margin:0;letter-spacing:-0.01em;">Welcome to Respirology Hub</h2></div><p style="font-size:14px;color:var(--text-2);margin:0 0 22px;">Your quick guide to finding the evidence you need.</p><div style="display:flex;flex-direction:column;gap:15px;margin-bottom:26px;">';
+    steps.forEach(function(st, i){ html+='<div style="display:flex;align-items:flex-start;gap:13px;"><span style="width:24px;height:24px;border-radius:50%;flex:none;background:'+st[0]+';color:'+st[1]+';font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;">'+(i+1)+'</span><p style="font-size:14px;line-height:1.5;color:var(--text-3);margin:0;">'+st[2]+'</p></div>'; });
+    html+='</div><button class="rh-blue" data-act="closeHelp" style="width:100%;font-family:inherit;font-size:14px;font-weight:600;border:none;cursor:pointer;border-radius:11px;padding:13px;background:#0071e3;color:#fff;">Got it</button><p style="text-align:center;font-size:12px;color:var(--faint);margin:14px 0 0;">Tap the ? in the top bar to see this again.</p></div></div>';
+  }
+
+  /* password modal */
+  if(state.askPassword){
+    html+='<div data-print-hide data-act="cancelPw" style="position:fixed;inset:0;z-index:220;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--scrim);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);animation:rhPop .2s ease both;"><div data-act="stop" style="width:100%;max-width:400px;background:var(--surface);border-radius:20px;padding:28px;box-shadow:0 24px 60px rgba(0,0,0,0.3);animation:rhPop .3s ease both;"><div style="display:flex;align-items:center;gap:11px;margin-bottom:14px;"><div style="width:32px;height:32px;border-radius:9px;background:rgba(0,113,227,0.1);display:flex;align-items:center;justify-content:center;flex:none;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0071e3" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></div><h2 style="font-size:18px;font-weight:700;color:var(--text);margin:0;letter-spacing:-0.01em;">Admin access</h2></div><p style="font-size:14px;line-height:1.5;color:var(--text-2);margin:0 0 18px;">Enter the admin password to manage the archive.</p><input id="pwInput" data-model="pwInput" data-enter="submitPw" type="password" value="'+esc(state.pwInput)+'" placeholder="Password" class="rh-input" style="width:100%;height:42px;padding:0 14px;font-family:inherit;font-size:14px;color:var(--text);background:var(--fill);border:1px solid '+(state.pwError?'#ff3b30':'var(--border-3)')+';border-radius:10px;outline:none;margin-bottom:8px;">';
+    if(state.pwError) html+='<p style="font-size:12px;font-weight:500;color:#ff3b30;margin:0 0 12px;">Incorrect password. Please try again.</p>';
+    html+='<div style="display:flex;gap:10px;margin-top:10px;"><button class="rh-blue" data-act="submitPw" style="flex:1 1 auto;font-family:inherit;font-size:14px;font-weight:600;border:none;cursor:pointer;border-radius:11px;padding:12px;background:#0071e3;color:#fff;">Unlock</button><button class="rh-grey" data-act="cancelPw" style="flex:none;font-family:inherit;font-size:14px;font-weight:600;border:none;cursor:pointer;border-radius:11px;padding:12px 18px;background:var(--grey-btn);color:var(--text-2);">Cancel</button></div></div></div>';
+  }
+
+  /* delete-subspecialty modal */
+  if(state.deleteSubTarget && repo[state.deleteSubTarget]){
+    var dt=state.deleteSubTarget, dd=repo[dt];
+    var dCount=dd.rct.length+dd.review.length+dd.guideline.length;
+    var ready=state.deleteSubInput.trim()===dt;
+    html+='<div data-print-hide data-act="cancelDeleteSub" style="position:fixed;inset:0;z-index:210;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--scrim);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);animation:rhPop .2s ease both;"><div data-act="stop" style="width:100%;max-width:420px;background:var(--surface);border-radius:20px;padding:28px;box-shadow:0 24px 60px rgba(0,0,0,0.3);animation:rhPop .3s ease both;"><div style="display:flex;align-items:center;gap:11px;margin-bottom:14px;"><div style="width:32px;height:32px;border-radius:9px;background:rgba(255,59,48,0.12);display:flex;align-items:center;justify-content:center;flex:none;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#ff3b30" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg></div><h2 style="font-size:18px;font-weight:700;color:var(--text);margin:0;letter-spacing:-0.01em;">Delete '+esc(dt)+'?</h2></div><p style="font-size:14px;line-height:1.5;color:var(--text-2);margin:0 0 18px;">This permanently removes '+esc(dt)+' and all '+dCount+' records inside it. This cannot be undone.</p><label style="display:block;font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:7px;">Type <strong style="color:var(--text);">'+esc(dt)+'</strong> to confirm</label><input id="deleteSubInput" data-model="deleteSubInput" type="text" value="'+esc(state.deleteSubInput)+'" autocomplete="off" spellcheck="false" placeholder="Subspecialty name" class="rh-input-red" style="width:100%;height:42px;padding:0 14px;font-family:inherit;font-size:14px;color:var(--text);background:var(--fill);border:1px solid var(--border-3);border-radius:10px;outline:none;margin-bottom:18px;"><div style="display:flex;gap:10px;"><button data-act="confirmDeleteSub" style="flex:1 1 auto;font-family:inherit;font-size:14px;font-weight:600;border:none;border-radius:11px;padding:12px;color:#fff;background:'+(ready?'#ff3b30':'#f3b5b1')+';cursor:'+(ready?'pointer':'not-allowed')+';">Delete forever</button><button class="rh-grey" data-act="cancelDeleteSub" style="flex:none;font-family:inherit;font-size:14px;font-weight:600;border:none;cursor:pointer;border-radius:11px;padding:12px 18px;background:var(--grey-btn);color:var(--text-2);">Cancel</button></div></div></div>';
+  }
+
+  html+='</div>';
+
+  app.innerHTML=html;
+  if(animOn){ lastAnimKey=ak; requestAnimationFrame(runStagger); }
+}
+
+/* ---------- stagger (transform-only, matches spec) ---------- */
+function runStagger(){
+  if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  var els=app.querySelectorAll('.rh-anim');
+  els.forEach(function(c, i){
+    try{ c.animate([{transform:'translateY(16px) scale(0.985)'},{transform:'none'}], {duration:460, delay:Math.min(i*38,520), easing:'cubic-bezier(0.22,1,0.36,1)', fill:'backwards'}); }catch(e){}
+  });
+}
+
+/* ---------- setState with focus preservation ---------- */
+function setState(patch){
+  var a=document.activeElement;
+  var f=(a&&a.id&&a.tagName==='INPUT')?{id:a.id,s:a.selectionStart,e:a.selectionEnd}:null;
+  Object.assign(state, patch);
+  render();
+  if(f){ var el=document.getElementById(f.id); if(el){ el.focus(); try{ el.setSelectionRange(f.s,f.e); }catch(_){} } }
+  else if(state.askPassword){ var p=document.getElementById('pwInput'); if(p) p.focus(); }
+  else if(state.deleteSubTarget){ var ds=document.getElementById('deleteSubInput'); if(ds) ds.focus(); }
+  writeHash();
+}
+
+/* ---------- event delegation ---------- */
+var actions={
+  resetDash:function(){ setState({view:'browse', libMode:'browse', topicId:Object.keys(getData())[0], query:''}); },
+  toggleTheme:function(){ var nt=state.theme==='dark'?'light':'dark'; try{ localStorage.setItem('respHubTheme',nt); }catch(e){} state.theme=nt; document.documentElement.setAttribute('data-theme',nt); render(); },
+  goSaved:function(){ setState({view:'browse', libMode:'saved', query:''}); },
+  toggleSave:function(el){ var k=el.getAttribute('data-key'); var on; if(SAVED[k]){ delete SAVED[k]; on=false; } else { SAVED[k]=true; on=true; } persistSaved(); flash(on?'Saved':'Removed from saved'); writeHash(); if(on){ try{ var sel='.rh-star[data-key="'+((window.CSS&&CSS.escape)?CSS.escape(k):k)+'"] svg'; var svg=document.querySelector(sel); if(svg) svg.animate([{transform:'scale(.5)'},{transform:'scale(1.25)'},{transform:'scale(1)'}],{duration:300,easing:'cubic-bezier(0.22,1,0.36,1)'}); }catch(e){} } },
+  copyLink:function(el){ copyText(el.getAttribute('data-url'), 'Link copied'); },
+  copyViewLink:function(){ copyText(location.href, 'Page link copied'); },
+  goLibrary:function(){ setState({view:'browse'}); },
+  goAdmin:function(){ if(state.adminAuthed) setState({view:'admin'}); else setState({askPassword:true, pwInput:'', pwError:false}); },
+  openHelp:function(){ setState({showHelp:true}); },
+  closeHelp:function(){ try{ localStorage.setItem('respHubSeen_v1','1'); }catch(e){} setState({showHelp:false}); },
+  toggleNav:function(){ setState({navOpen:!state.navOpen}); },
+  selectTopic:function(el){ setState({topicId:el.getAttribute('data-name'), query:'', libMode:'browse'}); },
+  clearSearch:function(){ setState({query:'', libMode:'browse'}); },
+  selectAdminTopic:function(el){ selectAdminTopic(el.getAttribute('data-name')); },
+  askDeleteSub:function(el){ setState({deleteSubTarget:el.getAttribute('data-name'), deleteSubInput:''}); },
+  addSub:function(){ addSub(); render(); },
+  rename:function(){ renameSub(); render(); },
+  typeOpt:function(el){ setState({afType:el.getAttribute('data-type')}); },
+  saveArticle:function(){ saveArticle(); render(); },
+  cancelEdit:function(){ setState({editing:null, afTitle:'', afUrl:''}); },
+  editArticle:function(el){ editArticle(el.getAttribute('data-type'), +el.getAttribute('data-index')); },
+  askDeleteArticle:function(el){ setState({confirmArticle:{type:el.getAttribute('data-type'), index:+el.getAttribute('data-index')}}); },
+  confirmDeleteArticle:function(el){ deleteArticle(el.getAttribute('data-type'), +el.getAttribute('data-index')); render(); },
+  cancelDeleteArticle:function(){ setState({confirmArticle:null}); },
+  confirmDeleteSub:function(){ if(state.deleteSubTarget && state.deleteSubInput.trim()===state.deleteSubTarget){ var n=state.deleteSubTarget; deleteSub(n); setState({deleteSubTarget:null, deleteSubInput:''}); } },
+  cancelDeleteSub:function(){ setState({deleteSubTarget:null, deleteSubInput:''}); },
+  submitPw:function(){ submitPassword(); },
+  cancelPw:function(){ setState({askPassword:false, pwInput:'', pwError:false}); },
+  stop:function(){}
+};
+app.addEventListener('click', function(e){
+  var t=e.target.closest('[data-act]');
+  if(!t) return;
+  var act=t.getAttribute('data-act');
+  if(actions[act]){ actions[act](t); }
+});
+app.addEventListener('input', function(e){
+  var t=e.target;
+  var model=t.getAttribute&&t.getAttribute('data-model');
+  if(!model) return;
+  var patch={}; patch[model]=t.value;
+  if(model==='pwInput') patch.pwError=false;
+  setState(patch);
+});
+app.addEventListener('keydown', function(e){
+  if(e.key!=='Enter') return;
+  var t=e.target;
+  var en=t.getAttribute&&t.getAttribute('data-enter');
+  if(en==='addSub'){ addSub(); render(); }
+  else if(en==='submitPw'){ submitPassword(); }
+});
+window.addEventListener('keydown', function(e){
+  if((e.metaKey||e.ctrlKey) && (e.key==='k'||e.key==='K')){
+    e.preventDefault();
+    if(state.view!=='browse' || state.query || state.libMode!=='browse') setState({view:'browse', libMode:'browse'}); else render();
+    requestAnimationFrame(function(){ var el=document.getElementById('globalSearch'); if(el) el.focus(); });
+  }
+});
+/* shareable deep links: restore state from the URL on load + on back/forward */
+window.addEventListener('hashchange', function(){ var h=readHash(); Object.assign(state, {topicId:h.topicId||null, query:h.query||'', libMode:h.libMode||'browse'}); render(); });
+
+Object.assign(state, readHash());
+render();
+})();
+</script>
+</body>
+</html>
